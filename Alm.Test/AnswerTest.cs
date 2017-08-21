@@ -9,7 +9,7 @@ namespace Alm.Test
 		public void TryGetTheAnswer()
 		{
 			var computer = new MegaComputer();
-			Assert.Throws<Exception>(() => computer.Ask(null));
+			Assert.Throws<ArgumentNullException>(() => computer.Ask(null));
 		}
     }
 }
