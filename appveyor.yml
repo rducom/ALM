@@ -55,7 +55,7 @@ before_build:
     )
 
 test_script:
-- OpenCover.Console.exe -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
+- OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
 - codecov -f coverage-opencover.xml
 
 build:
