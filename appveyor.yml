@@ -21,6 +21,8 @@ init:
 environment:
   SONAR_TOKEN:
     secure: 7erJjZzqC/gHB5rNZ1aC/CDpHjrlnDT9rQX+CB7A30h5F34LB4jcibonoE7PvsYs
+  GITHUB_ACCESS_TOKEN:
+    secure: uj8259rTzhBmAdk/WjTMFBW69/ic/W4fC2OxxVxKDYnqTdzM7x4BYumGK5zvxfip
 
 branches:
   only:
@@ -57,7 +59,9 @@ test_script:
 - codecov -f coverage-opencover.xml
 
 build:
+  parallel: true
   project: Alm.sln
+  verbosity: minimal
 
 after_build:
 - cmd: >-
