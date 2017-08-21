@@ -40,7 +40,10 @@ dotnet_csproj:
 
 before_build:
 - dotnet restore
+- nuget install xunit.runner.console -Version 2.3.0-beta4-build3742 
 - choco install "msbuild-sonarqube-runner" -y
+- choco install opencover.portable
+- choco install codecov
 
 - cmd: >-
     IF "%APPVEYOR_PULL_REQUEST_NUMBER%"=="" (
@@ -49,7 +52,9 @@ before_build:
     C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe begin /k:"Alm" /d:"sonar.analysis.mode=preview" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=rducom-github" /d:"sonar.login=%SONAR_TOKEN%" /d:"sonar.github.pullRequest=%APPVEYOR_PULL_REQUEST_NUMBER%" /d:"sonar.github.repository=rducom/ALM" /d:"sonar.github.oauth=%GITHUB_ACCESS_TOKEN%"
     )
 
-test: off
+test_script:
+- OpenCover.Console.exe -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
+- codecov -f coverage-opencover.xml
 
 build:
   project: Alm.sln
