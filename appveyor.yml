@@ -1,0 +1,59 @@
+image: Visual Studio 2017
+
+version: 1.1.{build}
+
+init:
+  # Set "build version number" to "short-commit-hash" or when tagged to "tag name" (Travis style)
+  - ps: >- 
+      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      {
+        Update-AppveyorBuild -Version "$($env:appveyor_repo_tag_name.TrimStart("v"))"
+      }
+      elseif($env:APPVEYOR_PULL_REQUEST_NUMBER)
+      {
+        Update-AppveyorBuild -Version "$env:appveyor_build_version-dev-$($env:APPVEYOR_PULL_REQUEST_NUMBER)"
+      }
+      else
+      {
+        Update-AppveyorBuild -Version "$env:appveyor_build_version-beta-$($env:APPVEYOR_BUILD_NUMBER)"
+      }
+
+environment:
+  SONAR_TOKEN:
+    secure: 7erJjZzqC/gHB5rNZ1aC/CDpHjrlnDT9rQX+CB7A30h5F34LB4jcibonoE7PvsYs
+
+branches:
+  only:
+    - master
+# Do not build feature branch with open Pull Requests
+skip_branch_with_pr: true
+pull_requests:
+  do_not_increment_build_number: true
+configuration: Release
+platform: Any CPU
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+
+before_build:
+- dotnet restore
+- choco install "msbuild-sonarqube-runner" -y
+
+- cmd: >-
+    IF "%APPVEYOR_PULL_REQUEST_NUMBER%"=="" (
+    C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe begin /k:"Alm" /d:"sonar.analysis.mode=publish" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=rducom-github" /d:"sonar.login=%SONAR_TOKEN%"
+    ) ELSE (
+    C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe begin /k:"Alm" /d:"sonar.analysis.mode=preview" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=rducom-github" /d:"sonar.login=%SONAR_TOKEN%" /d:"sonar.github.pullRequest=%APPVEYOR_PULL_REQUEST_NUMBER%" /d:"sonar.github.repository=rducom/ALM" /d:"sonar.github.oauth=%GITHUB_ACCESS_TOKEN%"
+    )
+
+test: off
+
+build:
+  project: Alm.sln
+
+after_build:
+- cmd: >-
+    C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe end /d:"sonar.login=%SONAR_TOKEN%"

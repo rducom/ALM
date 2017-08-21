@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alm", "Alm\Alm.csproj", "{CDBFC700-68BA-407D-81BC-A7C4279933F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alm.Test", "Alm.Test\Alm.Test.csproj", "{F30D0AA2-A221-4184-85D0-F5206D0798F5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F25BACA4-F496-4E81-AB82-90F70F10EC8E}"
+	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CDBFC700-68BA-407D-81BC-A7C4279933F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDBFC700-68BA-407D-81BC-A7C4279933F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDBFC700-68BA-407D-81BC-A7C4279933F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDBFC700-68BA-407D-81BC-A7C4279933F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F30D0AA2-A221-4184-85D0-F5206D0798F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F30D0AA2-A221-4184-85D0-F5206D0798F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F30D0AA2-A221-4184-85D0-F5206D0798F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F30D0AA2-A221-4184-85D0-F5206D0798F5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {86848E77-9E77-4590-86CC-E8ED03F1FB1A}
+	EndGlobalSection
+EndGlobal
