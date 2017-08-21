@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System;
+using Xunit;
 
 namespace Alm.Test
 {
@@ -7,8 +8,8 @@ namespace Alm.Test
 		[Fact]
 		public void TryGetTheAnswer()
 		{
-			var s = new SuperbClass();
-			Assert.Equal(42, s.TheAnswer());
+			var computer = new MegaComputer();
+			Assert.Throws<Exception>(() => computer.Ask(null));
 		}
     }
 }
