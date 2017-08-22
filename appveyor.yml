@@ -7,8 +7,6 @@ environment:
     secure: 7erJjZzqC/gHB5rNZ1aC/CDpHjrlnDT9rQX+CB7A30h5F34LB4jcibonoE7PvsYs
   GITHUB_ACCESS_TOKEN:
     secure: uj8259rTzhBmAdk/WjTMFBW69/ic/W4fC2OxxVxKDYnqTdzM7x4BYumGK5zvxfip
-  NUGET_TOKEN:
-    secure: pI7g9o0ov/i6LAUL4sOH9WsVniseBdJE4GRFlpXicLn6zJWCNPsamsi+/qgAqCFn
 
 branches:
   only:
@@ -49,11 +47,24 @@ install:
       {
         $ComputedVersion = "$NearestVersion.$($env:APPVEYOR_BUILD_NUMBER)-beta"
       }
+
+  - ps: >- 
+      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      {
+        $env:deploy_public = "true"
+      }
+      else
+      {
+        $env:deploy_unstable = "true"
+      }
+
   - ps: 'Write-Host "Computed version = $ComputedVersion"' 
   - ps: 'Update-AppveyorBuild -Version "$ComputedVersion"'
   - choco install "msbuild-sonarqube-runner" -y
   - choco install opencover.portable
   - choco install codecov
+  - ps: >- 
+
 
 dotnet_csproj:
   patch: true
@@ -82,11 +93,29 @@ after_build:
     dotnet pack Alm\Alm.csproj --configuration %CONFIGURATION% /p:Version="%APPVEYOR_BUILD_VERSION%" -o artifacts
     
 test_script:
-- OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
+- OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full -c Debug .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
 - codecov -f coverage-opencover.xml
 
 artifacts:
-  - path: artifacts\**\*.nupkg
+  - path: Alm\artifacts\*.nupkg
     name: lib
 
+deploy:
 
+- provider: NuGet
+  api_key:
+    secure: pI7g9o0ov/i6LAUL4sOH9WsVniseBdJE4GRFlpXicLn6zJWCNPsamsi+/qgAqCFn
+  skip_symbols: true
+  artifact: /.*\.nupkg/
+  on:
+    branch: master
+    deploy_public: true
+
+- provider: NuGet
+  server: https://my.nuget.server/feed
+  api_key:
+    secure: pI7g9o0ov/i6LAUL4sOH9WsVniseBdJE4GRFlpXicLn6zJWCNPsamsi+/qgAqCFn
+  skip_symbols: true
+  artifact: /.*\.nupkg/
+  on:
+    deploy_unstable: true
