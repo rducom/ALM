@@ -1,38 +1,59 @@
 image: Visual Studio 2017
 
-version: 1.1.{build}
-
-init:
-  # Set "build version number" to "short-commit-hash" or when tagged to "tag name" (Travis style)
-  - ps: >- 
-      if ($env:APPVEYOR_REPO_TAG -eq "true")
-      {
-        Update-AppveyorBuild -Version "$($env:appveyor_repo_tag_name.TrimStart("v"))"
-      }
-      elseif($env:APPVEYOR_PULL_REQUEST_NUMBER)
-      {
-        Update-AppveyorBuild -Version "$env:appveyor_build_version-dev-$($env:APPVEYOR_PULL_REQUEST_NUMBER)"
-      }
-      else
-      {
-        Update-AppveyorBuild -Version "$env:appveyor_build_version-beta-$($env:APPVEYOR_BUILD_NUMBER)"
-      }
-
+version: 1.0.{build}
+       
 environment:
   SONAR_TOKEN:
     secure: 7erJjZzqC/gHB5rNZ1aC/CDpHjrlnDT9rQX+CB7A30h5F34LB4jcibonoE7PvsYs
   GITHUB_ACCESS_TOKEN:
     secure: uj8259rTzhBmAdk/WjTMFBW69/ic/W4fC2OxxVxKDYnqTdzM7x4BYumGK5zvxfip
+  NUGET_TOKEN:
+    secure: pI7g9o0ov/i6LAUL4sOH9WsVniseBdJE4GRFlpXicLn6zJWCNPsamsi+/qgAqCFn
 
 branches:
   only:
     - master
+
 # Do not build feature branch with open Pull Requests
 skip_branch_with_pr: true
-pull_requests:
-  do_not_increment_build_number: true
+
 configuration: Release
 platform: Any CPU
+
+install:
+  # Get last commit tag to compute version
+  - ps: '$NearestTag = git.exe describe --tags $(git.exe rev-list --tags --max-count=1)'
+  - ps: >- 
+     if($NearestTag -eq $null)
+     {
+        $NearestVersion = $env:APPVEYOR_BUILD_VERSION
+     }
+     else
+     {
+        $NearestVersion =  $NearestTag.TrimStart("v")
+     }
+
+  # Release build : Git Tag (v4.2) + build number 
+  # Pull request build : Last tag on branch + build number + '-dev-' + PR number
+  # Commit on non PR branch : Last tag on branch + build number + '-beta' 
+  - ps: >- 
+      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      {
+        $ComputedVersion = "$($env:appveyor_repo_tag_name.TrimStart("v")).$($env:APPVEYOR_BUILD_NUMBER)"
+      }
+      elseif($env:APPVEYOR_PULL_REQUEST_NUMBER)
+      {
+        $ComputedVersion = "$NearestVersion.$($env:APPVEYOR_BUILD_NUMBER)-dev-$($env:APPVEYOR_PULL_REQUEST_NUMBER)"
+      }
+      else
+      {
+        $ComputedVersion = "$NearestVersion.$($env:APPVEYOR_BUILD_NUMBER)-beta"
+      }
+  - ps: 'Write-Host "Computed version = $ComputedVersion"' 
+  - ps: 'Update-AppveyorBuild -Version "$ComputedVersion"'
+  - choco install "msbuild-sonarqube-runner" -y
+  - choco install opencover.portable
+  - choco install codecov
 
 dotnet_csproj:
   patch: true
@@ -42,21 +63,12 @@ dotnet_csproj:
 
 before_build:
 - dotnet restore
-- nuget install xunit.runner.console -Version 2.3.0-beta4-build3742 
-- choco install "msbuild-sonarqube-runner" -y
-- choco install opencover.portable
-- choco install codecov
-
 - cmd: >-
     IF "%APPVEYOR_PULL_REQUEST_NUMBER%"=="" (
     C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe begin /k:"Alm" /d:"sonar.analysis.mode=publish" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=rducom-github" /d:"sonar.login=%SONAR_TOKEN%"
     ) ELSE (
     C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe begin /k:"Alm" /d:"sonar.analysis.mode=preview" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=rducom-github" /d:"sonar.login=%SONAR_TOKEN%" /d:"sonar.github.pullRequest=%APPVEYOR_PULL_REQUEST_NUMBER%" /d:"sonar.github.repository=rducom/ALM" /d:"sonar.github.oauth=%GITHUB_ACCESS_TOKEN%"
     )
-
-test_script:
-- OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
-- codecov -f coverage-opencover.xml
 
 build:
   parallel: true
@@ -65,4 +77,16 @@ build:
 
 after_build:
 - cmd: >-
-    C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe end /d:"sonar.login=%SONAR_TOKEN%"
+    "C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe" end /d:"sonar.login=%SONAR_TOKEN%"
+- cmd: >-
+    dotnet pack Alm\Alm.csproj --configuration %CONFIGURATION% /p:Version="%APPVEYOR_BUILD_VERSION%" -o artifacts
+    
+test_script:
+- OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
+- codecov -f coverage-opencover.xml
+
+artifacts:
+  - path: artifacts\**\*.nupkg
+    name: lib
+
+
