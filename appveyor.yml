@@ -18,6 +18,8 @@ init:
         Update-AppveyorBuild -Version "$env:appveyor_build_version-beta-$($env:APPVEYOR_BUILD_NUMBER)"
       }
 
+shallow_clone: true
+
 environment:
   SONAR_TOKEN:
     secure: 7erJjZzqC/gHB5rNZ1aC/CDpHjrlnDT9rQX+CB7A30h5F34LB4jcibonoE7PvsYs
