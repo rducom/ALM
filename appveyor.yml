@@ -110,12 +110,12 @@ deploy:
   on:
     branch: master
     deploy_public: true
-
+     
 - provider: NuGet
-  server: https://my.nuget.server/feed
+  server: https://ci.appveyor.com/nuget/raph-r95r21ggl8dg
   api_key:
-    secure: pI7g9o0ov/i6LAUL4sOH9WsVniseBdJE4GRFlpXicLn6zJWCNPsamsi+/qgAqCFn
-  skip_symbols: true
+    secure: JmWl2yOQSj9MLgHSmA1tHywqEsMktEO7PvKR+roJvRg=
+  skip_symbols: false
   artifact: /.*\.nupkg/
   on:
     deploy_unstable: true
