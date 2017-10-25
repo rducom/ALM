@@ -60,13 +60,13 @@
 		$NearestVersion = VersionNormed($NearestVersion)
 		
 		#If no CI build counter, use local counter
-		$RevisionCounter = 0
-		$ModeLocal = "false"
+		[int]$RevisionCounter = 0
+		[bool]$ModeLocal = $false
 		$file = ".\.versionCounter"
 		if([string]::IsNullOrEmpty($Counter)){
 			# in local mode, we use a local file to store the last build
-			$ModeLocal = "true" 
-			if([System.IO.File]::Exists($file)){
+			$ModeLocal = $true
+			if(Test-path $file){
 				try{
 					$RevisionCounter = [int](Get-Content $file | Select -First 1) 
 					Write-Host "local counter found : " $RevisionCounter
@@ -99,7 +99,7 @@
 
 		if($IsTag){
 			# git tag mode : either release or pre-release
-			$deploy_public = "true"
+			$deploy_public = $true
 			if ($requested_tag -match "[a-zA-Z-]"){	
 				Write-Host "Mode : pre-release" 	# tag like 1.2.3-rc3 => mode pre-release
 				$VersionSuffix = $requested_tag
@@ -108,14 +108,17 @@
 				$VersionSuffix = ""
 			}
 		}else{
-			$deploy_unstable = "true"
-			if($ModeLocal = "true"){						
+			
+			if($ModeLocal){			
+				$deploy_local = $true			
 				Write-Host "Mode : dev" 						# 1.2.3-dev-X
 				$VersionSuffix = "dev-" + $RevisionCounter
 			}elseif(![string]::IsNullOrEmpty($PullRequest)){ 
-				Write-Host "Mode : pull-request (alpha)" 		# mode on PR => # 1.2.3-alpha-PR4824.X 
-				$VersionSuffix = "alpha-" + $RevisionCounter
+				$deploy_unstable = $true
+				Write-Host "Mode : pull-request (alpha)" 		# mode on PR => # 1.2.3-PR4824-X 
+				$VersionSuffix = "PR" + $PullRequest + "-" + $RevisionCounter
 			}else{
+				$deploy_unstable = $true
 				Write-Host "Mode : master beta" 				# mode build on master => 1.2.3-beta-X 
 				$VersionSuffix = "beta-" + $RevisionCounter
 			}
@@ -129,8 +132,12 @@
 			$env:deploy_unstable = "true"
 			Write-Host "Deploy : private"
 		}
+		if($deploy_local){
+			Write-Host "Deploy : local"
+		}
 
 		if($ModeLocal){
+			Write-Host "local counter incrementation"
 			($RevisionCounter + 1) | Set-Content $file
 		}
 	
@@ -141,6 +148,8 @@
 		return New-Object PSObject -Property @{
 			Nearest = $NearestVersion
 			Semver = $VersionPrefix + "-" + $VersionSuffix
+			Prefix = $VersionPrefix
+			Suffix = $VersionSuffix
 			Assembly = $Version 
 		}
 	}

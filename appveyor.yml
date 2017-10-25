@@ -20,12 +20,11 @@ platform: Any CPU
 
 install:
   # compute version
-  - ps: >- 
-     . .\build\ComputeVersion.ps1
-     $version = Compute Alm\Alm.csproj, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_REPO_TAG, $env:APPVEYOR_BUILD_NUMBER
-     Write-Host "Semver extracted : " $version.Semver
-     Update-AppveyorBuild -Version $version.Semver
-
+  - ps: . .\build\ComputeVersion.ps1
+  - ps: $version = Compute "Alm\Alm.csproj" $env:APPVEYOR_BUILD_NUMBER ([System.Convert]::ToBoolean($env:APPVEYOR_REPO_TAG)) $env:APPVEYOR_PULL_REQUEST_NUMBER
+  - ps: Update-AppveyorBuild -Version $version.Semver
+  - ps: $env:Prefix = $version.Prefix
+  - ps: $env:Suffix = $version.Suffix
   - choco install "msbuild-sonarqube-runner" -y
   - choco install opencover.portable
   - choco install codecov
@@ -46,17 +45,16 @@ before_build:
     C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe begin /k:"Alm" /d:"sonar.analysis.mode=preview" /d:"sonar.host.url=https://sonarcloud.io" /d:"sonar.organization=rducom-github" /d:"sonar.login=%SONAR_TOKEN%" /d:"sonar.github.pullRequest=%APPVEYOR_PULL_REQUEST_NUMBER%" /d:"sonar.github.repository=rducom/ALM" /d:"sonar.github.oauth=%GITHUB_ACCESS_TOKEN%"
     )
 
-build:
-  parallel: true
-  project: Alm.sln
-  verbosity: minimal
+build_script:
+- cmd: >-
+     msbuild "C:\projects\alm\Alm.sln" /m /verbosity:minimal /property:VersionPrefix=%Prefix%;VersionSuffix=%Suffix% /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 after_build:
 - cmd: >-
     "C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe" end /d:"sonar.login=%SONAR_TOKEN%"
 - cmd: >-
     dotnet pack Alm\Alm.csproj --configuration %CONFIGURATION% /p:Version="%APPVEYOR_BUILD_VERSION%" -o artifacts
-    
+
 test_script:
 - OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full -c Debug .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
 - codecov -f coverage-opencover.xml
