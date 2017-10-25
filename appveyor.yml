@@ -19,51 +19,16 @@ configuration: Release
 platform: Any CPU
 
 install:
-  # Get last commit tag to compute version
-  - ps: '$NearestTag = git.exe describe --tags $(git.exe rev-list --tags --max-count=1)'
+  # compute version
   - ps: >- 
-     if($NearestTag -eq $null)
-     {
-        $NearestVersion = $env:APPVEYOR_BUILD_VERSION
-     }
-     else
-     {
-        $NearestVersion =  $NearestTag.TrimStart("v")
-     }
+     . .\build\ComputeVersion.ps1
+     $version = Compute Alm\Alm.csproj, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_REPO_TAG, $env:APPVEYOR_BUILD_NUMBER
+     Write-Host "Semver extracted : " $version.Semver
+     Update-AppveyorBuild -Version $version.Semver
 
-  # Release build : Git Tag (v4.2) + build number 
-  # Pull request build : Last tag on branch + build number + '-dev-' + PR number
-  # Commit on non PR branch : Last tag on branch + build number + '-beta' 
-  - ps: >- 
-      if ($env:APPVEYOR_REPO_TAG -eq "true")
-      {
-        $ComputedVersion = "$($env:appveyor_repo_tag_name.TrimStart("v")).$($env:APPVEYOR_BUILD_NUMBER)"
-      }
-      elseif($env:APPVEYOR_PULL_REQUEST_NUMBER)
-      {
-        $ComputedVersion = "$NearestVersion.$($env:APPVEYOR_BUILD_NUMBER)-dev-$($env:APPVEYOR_PULL_REQUEST_NUMBER)"
-      }
-      else
-      {
-        $ComputedVersion = "$NearestVersion.$($env:APPVEYOR_BUILD_NUMBER)-beta"
-      }
-
-  - ps: >- 
-      if ($env:APPVEYOR_REPO_TAG -eq "true")
-      {
-        $env:deploy_public = "true"
-      }
-      else
-      {
-        $env:deploy_unstable = "true"
-      }
-
-  - ps: 'Write-Host "Computed version = $ComputedVersion"' 
-  - ps: 'Update-AppveyorBuild -Version "$ComputedVersion"'
   - choco install "msbuild-sonarqube-runner" -y
   - choco install opencover.portable
   - choco install codecov
-  - ps: >- 
 
 
 dotnet_csproj:
