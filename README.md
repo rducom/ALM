@@ -37,13 +37,16 @@ If you leave ```<Version>...</Version>``` in place, msbuild will not be able to 
 
 ### Version numbering :
 
-|SemVer Version			|Use case									|Publish target	|Remark
+|SemVer Version			|Use case								|Publish target	|Remark
 |-------------------|-------------------------------------------|---------------|------
 | 1.2.3-dev-Z		|local dev build 							| local			|Z = local counter
 | 1.2.3-PR4824-X	|Pull Request build 						| private		|X = remote counter
+| 1.2.3-rc3-X		|build on master, without commit tag		| private		|X = remote counter (last git tag = 1.2.3-rc3)
 | 1.2.3-beta-X		|build on master, without commit tag 		| private		|X = remote counter (last git tag = 1.2.3)
-| 1.2.3-rc3-beta-X	|build on master, without commit tag		| private		|X = remote counter (last git tag = 1.2.3-rc3)
 | 1.2.3-rc3			|build on master, with git Tag = "1.2.3-rc3"| public		|pre-release
 | 1.2.4				|build on master, with git Tag = "1.2.3" 	| public		|release
 
+### Known issues :
 
+- Currently, dotnet build CLI isn't supported by sonar, same for code coverage
+- We currently need 2 compilations : 1 for sonar, 1 for the tests
