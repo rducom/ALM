@@ -144,16 +144,16 @@
 			($RevisionCounter + 1) | Set-Content $file
 		}
 	
-		Write-Host "Nearest  = " $NearestVersion
-		Write-Host "Semver   = " $VersionPrefix-$VersionSuffix 
-		Write-Host "Assembly = " $Version 
-
 		[string]$Semver
-		if ([string]::IsNullOrEmpty($VersionSuffix)){
+		if ([string]::IsNullOrWhiteSpace($VersionSuffix)){
 			$Semver = $VersionPrefix
 		}else{
 			$Semver = $VersionPrefix + "-" + $VersionSuffix
 		}
+		
+		Write-Host "Nearest  = " $NearestVersion
+		Write-Host "Semver   = " $Semver
+		Write-Host "Assembly = " $Version 
 
 		return New-Object PSObject -Property @{
 			Nearest = $NearestVersion
