@@ -11,7 +11,7 @@
 	function Compute (
 		[Parameter(Mandatory=$true)][string]$CsProjPath,
 		[Parameter(Mandatory=$false)][string]$Counter,
-        [Parameter(Mandatory=$false)][bool]$IsTag,
+        [Parameter(Mandatory=$false)][string]$IsTag,
         [Parameter(Mandatory=$false)][string]$PullRequest
 	)
 	{
@@ -96,8 +96,8 @@
 		# Suffix is alway computed, from the context parameters (ex: beta-X)
 		# EXCEPT : when the suffix comes from the git tag (ex 1.2.3-rc42). In this case
 		$VersionSuffix
-
-		if($IsTag){
+		
+		if([System.Convert]::ToBoolean($IsTag)){
 			# git tag mode : either release or pre-release
 			$deploy_public = $true
 			if (![string]::IsNullOrEmpty($RequiredSuffix)){	
@@ -154,6 +154,11 @@
 		Write-Host "Nearest  = " $NearestVersion
 		Write-Host "Semver   = " $Semver
 		Write-Host "Assembly = " $Version 
+
+		$env:Semver = $version.Semver
+		$env:Suffix = $version.Suffix
+		$env:Prefix = $version.Prefix
+		$env:Assembly = $version.Assembly
 
 		return New-Object PSObject -Property @{
 			Nearest = $NearestVersion

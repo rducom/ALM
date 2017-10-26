@@ -15,7 +15,7 @@ We publish artefact on different targets (internal appveyor nuget feed and offic
 Use ComputeVersion.ps1 for automatic version numbering
 ```PowerShell
   - ps: . .\build\ComputeVersion.ps1
-  - ps: $version = Compute "Alm\Alm.csproj" $env:APPVEYOR_BUILD_NUMBER ([System.Convert]::ToBoolean($env:APPVEYOR_REPO_TAG)) $env:APPVEYOR_PULL_REQUEST_NUMBER
+  - ps: $version = Compute "Alm\Alm.csproj" $env:APPVEYOR_BUILD_NUMBER $env:APPVEYOR_REPO_TAG $env:APPVEYOR_PULL_REQUEST_NUMBER
   - ps: Update-AppveyorBuild -Version $version.Semver
 ```
 
@@ -33,7 +33,7 @@ Note on csproj : you should replace actual ```<Version>1.2.3.4</Version>``` with
 	<PackageVersion>1.2.3-alpha4</PackageVersion>
 ```
 
-If you leave ```<Version>...</Version>``` in place, msbuild will not be able to substitute version.
+If you leave ```<Version>...</Version>``` in place, msbuild will not be able to substitute version with SemVer2 compatible versions.
 
 ### Version numbering :
 
