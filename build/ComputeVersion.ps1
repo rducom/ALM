@@ -16,12 +16,12 @@
 	)
 	{
 		[version]$NearestVersion
-		[string]$RequieredSuffix
+		[string]$RequiredSuffix
 		# Try extract git tag
 		try{
 			$tagfound = git.exe describe --tags $(git.exe rev-list --tags --max-count=1)
-			$pre = GetPrefix($tagfound)
-			$RequieredSuffix = GetSuffix($tagfound)
+			$pre = GetPrefix($tagfound.Trim())
+			$RequiredSuffix = GetSuffix($tagfound)
 			$NearestVersion = [version]::Parse($pre)
 			Write-Host "Git tag found : " $tagfound
 			#if there's a git tag in the past, it overrides the csproj version
@@ -44,7 +44,7 @@
 					$xmlFound = Select-Xml -XPath "/Project/PropertyGroup/Version" -Path $CsProjPath
 					if(![string]::IsNullOrEmpty($xmlFound.Node.InnerText)){
 						$pre = GetPrefix($xmlFound.Node.InnerText)
-						$RequieredSuffix = GetSuffix($xmlFound.Node.InnerText)
+						$RequiredSuffix = GetSuffix($xmlFound.Node.InnerText)
 						$NearestVersion = [version]::Parse($pre)
 						Write-Host "Csproj Version found : " $NearestVersion
 					}else{

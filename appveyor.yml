@@ -53,7 +53,7 @@ after_build:
 - cmd: >-
     "C:\ProgramData\chocolatey\lib\msbuild-sonarqube-runner\tools\MSBuild.SonarQube.Runner.exe" end /d:"sonar.login=%SONAR_TOKEN%"
 - cmd: >-
-    dotnet pack Alm\Alm.csproj --configuration %CONFIGURATION% /p:Version="%APPVEYOR_BUILD_VERSION%" -o artifacts
+    dotnet pack Alm\Alm.csproj --configuration %CONFIGURATION% /p:PackageVersion="%APPVEYOR_BUILD_VERSION%" -o artifacts
 
 test_script:
 - OpenCover.Console.exe -returntargetcode -oldstyle -register:user -target:"C:\Program Files\dotnet\dotnet.exe" -targetargs:"test /p:DebugType=full -c Debug .\Alm.Test\Alm.Test.csproj" -filter:"+[Alm*]* -[Alm.Test*]*" -excludebyattribute:"*.ExcludeFromCodeCoverage*" -output:coverage-opencover.xml
