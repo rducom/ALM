@@ -6,3 +6,5 @@
 */obj/*
 */bin/*
 /packages
+/.versionCounter
+/.vscode
