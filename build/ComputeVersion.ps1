@@ -93,22 +93,21 @@
 		# 1.2.3 
 		$VersionPrefix = "{0}.{1}.{2}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build 
 
-		# Suffix is alway computed, from the context parameters
-		# beta-X
+		# Suffix is alway computed, from the context parameters (ex: beta-X)
+		# EXCEPT : when the suffix comes from the git tag (ex 1.2.3-rc42). In this case
 		$VersionSuffix
 
 		if($IsTag){
 			# git tag mode : either release or pre-release
 			$deploy_public = $true
-			if ($requested_tag -match "[a-zA-Z-]"){	
+			if (![string]::IsNullOrEmpty($RequiredSuffix)){	
 				Write-Host "Mode : pre-release" 	# tag like 1.2.3-rc3 => mode pre-release
-				$VersionSuffix = $requested_tag
+				$VersionSuffix = $RequiredSuffix
 			}else{									
 				Write-Host "Mode : release" 		# tag like 1.2.3 => mode release
 				$VersionSuffix = ""
 			}
 		}else{
-			
 			if($ModeLocal){			
 				$deploy_local = $true			
 				Write-Host "Mode : dev" 						# 1.2.3-dev-X
@@ -117,9 +116,13 @@
 				$deploy_unstable = $true
 				Write-Host "Mode : pull-request (alpha)" 		# mode on PR => # 1.2.3-PR4824-X 
 				$VersionSuffix = "PR" + $PullRequest + "-" + $RevisionCounter
+			}elseif (![string]::IsNullOrEmpty($RequiredSuffix)){
+				$deploy_unstable = $true
+				Write-Host "Mode : master beta pre-release" 				# mode build on master => 1.2.3-rc3-X
+				$VersionSuffix = $RequiredSuffix + "-" + $RevisionCounter
 			}else{
 				$deploy_unstable = $true
-				Write-Host "Mode : master beta" 				# mode build on master => 1.2.3-beta-X 
+				Write-Host "Mode : master beta release" 				# mode build on master => 1.2.3-beta-X 
 				$VersionSuffix = "beta-" + $RevisionCounter
 			}
 		}
@@ -145,15 +148,21 @@
 		Write-Host "Semver   = " $VersionPrefix-$VersionSuffix 
 		Write-Host "Assembly = " $Version 
 
+		[string]$Semver
+		if ([string]::IsNullOrEmpty($VersionSuffix)){
+			$Semver = $VersionPrefix
+		}else{
+			$Semver = $VersionPrefix + "-" + $VersionSuffix
+		}
+
 		return New-Object PSObject -Property @{
 			Nearest = $NearestVersion
-			Semver = $VersionPrefix + "-" + $VersionSuffix
+			Semver = $Semver
 			Prefix = $VersionPrefix
 			Suffix = $VersionSuffix
 			Assembly = $Version 
 		}
 	}
-
 	
 	function GetPrefix ([string] $v = $(throw "version is a required parameter.")) 
 	{
