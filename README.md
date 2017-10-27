@@ -51,7 +51,7 @@ If you leave ```<Version>...</Version>``` in place, msbuild will not be able to 
 - Currently, dotnet build CLI isn't supported by sonar, same for code coverage
 - We currently need 2 compilations : 1 for sonar, 1 for the tests
 
-### A word au caution :
+### A word of caution :
 
 If your package version contains one of the following, they will not be visible from the older clients (NuGet clients before 4.3.0 or Visual Studio before 2017 version 15.3):
 
