@@ -6,8 +6,6 @@
 
 	# 1.2.3-rc3  			-> build on master, with git Tag = "1.2.3-rc3"  [public]  [pre-release]
 	# 1.2.4  				-> build on master, with git Tag = "1.2.3" 		[public]  [release]
-
-
 	function Compute (
 		[Parameter(Mandatory=$true)][string]$CsProjPath,
 		[Parameter(Mandatory=$false)][string]$Counter,
@@ -56,7 +54,6 @@
 			}
 		}
 
-		
 		$NearestVersion = VersionNormed($NearestVersion)
 		
 		#If no CI build counter, use local counter
@@ -82,9 +79,7 @@
 			$RevisionCounter = $Counter
 		}
 
-
 		# ------------- Version construction -----------------------
-
 	
 		# Version is build from prefix and the build counter.
 		# 1.2.3.X 
@@ -97,7 +92,7 @@
 		# EXCEPT : when the suffix comes from the git tag (ex 1.2.3-rc42). In this case
 		$VersionSuffix
 		
-		if([System.Convert]::ToBoolean($IsTag)){
+		if(![string]::IsNullOrEmpty($IsTag) -and [System.Convert]::ToBoolean($IsTag)){
 			# git tag mode : either release or pre-release
 			$deploy_public = $true
 			if (![string]::IsNullOrEmpty($RequiredSuffix)){	
@@ -154,11 +149,6 @@
 		Write-Host "Nearest  = " $NearestVersion
 		Write-Host "Semver   = " $Semver
 		Write-Host "Assembly = " $Version 
-
-		$env:Semver = $version.Semver
-		$env:Suffix = $version.Suffix
-		$env:Prefix = $version.Prefix
-		$env:Assembly = $version.Assembly
 
 		return New-Object PSObject -Property @{
 			Nearest = $NearestVersion
