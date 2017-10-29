@@ -15,48 +15,24 @@
 	{
 		[version]$NearestVersion
 		[string]$RequiredSuffix
+
 		# Try extract git tag
-		try{
-			$revList = git.exe rev-list --tags --max-count=1
-			if([string]::IsNullOrWhiteSpace($revList)){
-				Write-Host "No git tag found"
-			}else{
-				$tagfound = git.exe describe --tags $revList
-				$pre = GetPrefix($tagfound.Trim())
-				$RequiredSuffix = GetSuffix($tagfound)
-				$NearestVersion = [version]::Parse($pre)
-				Write-Host "Git tag found : " $tagfound
-				#if there's a git tag in the past, it overrides the csproj version
-			}
+		$tagfound = ExtractGitTag
+
+		if(![string]::IsNullOrWhiteSpace($tagfound)){
+			$pre = GetPrefix($tagfound.Trim())
+			# Only a git tag can drive the version suffix
+			$RequiredSuffix = GetSuffix($tagfound.Trim())
+			$NearestVersion = [version]::Parse($pre)
 		}
-		catch{ 
-			Write-Host "Git tag extraction error"
-		} 
-	
+		#if there's a git tag in the past, it overrides the csproj version
+		#else we try extract version from new csproj file
 		if(!$NearestVersion){
-			#fallback on try csproj version extraction
-			try{
-				# Try find VersionPrefix in new csproj format
-				$xmlFound = Select-Xml -XPath "/Project/PropertyGroup/VersionPrefix" -Path $CsProjPath
-				if(![string]::IsNullOrEmpty($xmlFound.Node.InnerText)){
-					$pre = GetPrefix($xmlFound.Node.InnerText) 
-					$NearestVersion = [version]::Parse($pre)
-					Write-Host "Csproj VersionPrefix found : " $NearestVersion 
-				}else{
-					# fallback on Version 
-					$xmlFound = Select-Xml -XPath "/Project/PropertyGroup/Version" -Path $CsProjPath
-					if(![string]::IsNullOrEmpty($xmlFound.Node.InnerText)){
-						$pre = GetPrefix($xmlFound.Node.InnerText)
-						$RequiredSuffix = GetSuffix($xmlFound.Node.InnerText)
-						$NearestVersion = [version]::Parse($pre)
-						Write-Host "Csproj Version found : " $NearestVersion
-					}else{
-						throw "nothing"
-					}
-				} 
-			}catch{
-				Write-Host "No Csproj version found"
-			}
+			$NearestVersion = ExtractNewCsProjVersion($CsProjPath)
+		}
+		#else we try to extract version from legacy assemblyInfo.cs
+		if(!$NearestVersion){
+			$NearestVersion = ExtractOldAssemblyInfoVersion($CsProjPath)
 		}
 
 		$NearestVersion = VersionNormed($NearestVersion)
@@ -161,6 +137,66 @@
 			Prefix = $VersionPrefix
 			Suffix = $VersionSuffix
 			Assembly = $Version 
+		}
+	}
+
+	function ExtractGitTag(){
+		try{
+			$revList = git.exe rev-list --tags --max-count=1
+			if([string]::IsNullOrWhiteSpace($revList)){
+				Write-Host "No git tag found"
+			}else{
+				$tagfound = git.exe describe --tags $revList
+				Write-Host "Git tag found : " $tagfound
+				return $tagfound
+				#if there's a git tag in the past, it overrides the csproj version
+			}
+		}
+		catch{ 
+			Write-Host "Git tag extraction error"
+		}
+		return $null
+	}
+
+	function ExtractNewCsProjVersion([string]$path){
+		if([IO.Path]::GetExtension($path) -ne '.csproj'){
+			return $null
+		}
+		try{
+			# Try find VersionPrefix in new csproj format
+			$xmlFound = Select-Xml -XPath "/Project/PropertyGroup/VersionPrefix" -Path $path
+			if(![string]::IsNullOrEmpty($xmlFound.Node.InnerText)){
+				$prefix = GetPrefix($xmlFound.Node.InnerText) 
+				$prefixVersion = [version]::Parse($prefix)
+				Write-Host "Csproj VersionPrefix found : " $prefixVersion 
+				return $prefixVersion
+			}else{
+				# fallback on Version 
+				$xmlFound = Select-Xml -XPath "/Project/PropertyGroup/Version" -Path $path
+				if(![string]::IsNullOrEmpty($xmlFound.Node.InnerText)){
+					$version = GetPrefix($xmlFound.Node.InnerText)
+					$versionVersion = [version]::Parse($version)
+					Write-Host "Csproj Version found : " $versionVersion
+					return $versionVersion
+				}else{
+					Write-Host "No Csproj Version or VersionPrefix found"
+				}
+			} 
+		}catch{
+			Write-Host "Error try to extract version from csproj"
+		}
+		return $null
+	}
+
+	function ExtractOldAssemblyInfoVersion([string]$path){
+		if([IO.Path]::GetExtension($path) -ne '.cs'){
+			return $null
+		}
+		$pattern = '\[assembly: AssemblyVersion\("(.*)"\)\]'
+		(Get-Content $path) | ForEach-Object{
+			if(!$_.Trim().StartsWith("//") -and $_ -match $pattern){
+				return [version]$matches[1]
+			}
 		}
 	}
 	
