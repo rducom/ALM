@@ -17,15 +17,20 @@
 		[string]$RequiredSuffix
 		# Try extract git tag
 		try{
-			$tagfound = git.exe describe --tags $(git.exe rev-list --tags --max-count=1)
-			$pre = GetPrefix($tagfound.Trim())
-			$RequiredSuffix = GetSuffix($tagfound)
-			$NearestVersion = [version]::Parse($pre)
-			Write-Host "Git tag found : " $tagfound
-			#if there's a git tag in the past, it overrides the csproj version
+			$revList = git.exe rev-list --tags --max-count=1
+			if([string]::IsNullOrWhiteSpace($revList)){
+				Write-Host "No git tag found"
+			}else{
+				$tagfound = git.exe describe --tags $revList
+				$pre = GetPrefix($tagfound.Trim())
+				$RequiredSuffix = GetSuffix($tagfound)
+				$NearestVersion = [version]::Parse($pre)
+				Write-Host "Git tag found : " $tagfound
+				#if there's a git tag in the past, it overrides the csproj version
+			}
 		}
 		catch{ 
-			Write-Host "No git tag found"
+			Write-Host "Git tag extraction error"
 		} 
 	
 		if(!$NearestVersion){
