@@ -59,6 +59,8 @@
 			Write-Host "Remote counter found : " $Counter
 			$RevisionCounter = $Counter
 		}
+		# Pad left with 0 because suffix in SemVer in ordered in alphanmeric
+		[string]$BuildNumber = "{0:D6}" -f $RevisionCounter
 
 		# ------------- Version construction -----------------------
 	
@@ -87,19 +89,19 @@
 			if($ModeLocal){			
 				$deploy_local = $true			
 				Write-Host "Mode : dev" 						# 1.2.3-dev-X
-				$VersionSuffix = "dev-" + $RevisionCounter
+				$VersionSuffix = "dev-" + $BuildNumber
 			}elseif(![string]::IsNullOrEmpty($PullRequest)){ 
 				$deploy_unstable = $true
 				Write-Host "Mode : pull-request (alpha)" 		# mode on PR => # 1.2.3-PR4824-X 
-				$VersionSuffix = "PR" + $PullRequest + "-" + $RevisionCounter
+				$VersionSuffix = "PR" + $PullRequest + "-" + $BuildNumber
 			}elseif (![string]::IsNullOrEmpty($RequiredSuffix)){
 				$deploy_unstable = $true
 				Write-Host "Mode : master beta pre-release" 				# mode build on master => 1.2.3-rc3-X
-				$VersionSuffix = $RequiredSuffix + "-" + $RevisionCounter
+				$VersionSuffix = $RequiredSuffix + "-" + $BuildNumber
 			}else{
 				$deploy_unstable = $true
 				Write-Host "Mode : master beta release" 				# mode build on master => 1.2.3-beta-X 
-				$VersionSuffix = "beta-" + $RevisionCounter
+				$VersionSuffix = "beta-" + $BuildNumber
 			}
 		}
 		
