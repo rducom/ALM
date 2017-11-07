@@ -63,13 +63,14 @@
 		[string]$BuildNumber = "{0:D6}" -f $RevisionCounter
 
 		# ------------- Version construction -----------------------
+
 	
 		# Version is build from prefix and the build counter.
 		# 1.2.3.X 
-		$Version = "{0}.{1}.{2}.{3}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build, $RevisionCounter
+		$Version = "{0}.{1}.{2}.{3}" -f $NearestVersion.Major, $NearestVersion.Minor, $($NearestVersion.Build +1), $RevisionCounter
 		# Prefix is guessed from Git Tag or existing <Version/> or <VersionPrefix/> in csproj
 		# 1.2.3 
-		$VersionPrefix = "{0}.{1}.{2}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build 
+		$VersionPrefix = "{0}.{1}.{2}" -f $NearestVersion.Major, $NearestVersion.Minor, $($NearestVersion.Build +1)
 
 		# Suffix is alway computed, from the context parameters (ex: beta-X)
 		# EXCEPT : when the suffix comes from the git tag (ex 1.2.3-rc42). In this case
