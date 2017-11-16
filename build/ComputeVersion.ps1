@@ -67,10 +67,10 @@
 	
 		# Version is build from prefix and the build counter.
 		# 1.2.3.X 
-		$Version = "{0}.{1}.{2}.{3}" -f $NearestVersion.Major, $NearestVersion.Minor, $($NearestVersion.Build +1), $RevisionCounter
+		$Version = "{0}.{1}.{2}.{3}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build, $RevisionCounter
 		# Prefix is guessed from Git Tag or existing <Version/> or <VersionPrefix/> in csproj
 		# 1.2.3 
-		$VersionPrefix = "{0}.{1}.{2}" -f $NearestVersion.Major, $NearestVersion.Minor, $($NearestVersion.Build +1)
+		$VersionPrefix = "{0}.{1}.{2}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build
 
 		# Suffix is alway computed, from the context parameters (ex: beta-X)
 		# EXCEPT : when the suffix comes from the git tag (ex 1.2.3-rc42). In this case
@@ -91,6 +91,10 @@
 				$deploy_local = $true			
 				Write-Host "Mode : dev" 						# 1.2.3-dev-X
 				$VersionSuffix = "dev-" + $BuildNumber
+				# For local build, we increment the Build for easy update in nuget
+				$NearestVersion = IncrementVersionBuild($NearestVersion)
+				$Version = "{0}.{1}.{2}.{3}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build, $RevisionCounter
+				$VersionPrefix = "{0}.{1}.{2}" -f $NearestVersion.Major, $NearestVersion.Minor, $NearestVersion.Build
 			}elseif(![string]::IsNullOrEmpty($PullRequest)){ 
 				$deploy_unstable = $true
 				Write-Host "Mode : pull-request (alpha)" 		# mode on PR => # 1.2.3-PR4824-X 
@@ -231,4 +235,14 @@
 		If ($v.Build -gt 0){ $Build = $v.Build }
 		If ($v.Revision -gt 0){ $Revision = $v.Revision }
 		return [version]::new($Major,$Minor,$Build,$Revision)
+	}
+
+	function IncrementVersionBuild ([Version] $v = $(throw "version is a required parameter.")) 
+	{
+		$Major, $Minor, $Build, $Revision = 0
+		If ($v.Major -gt 0){ $Major = $v.Major } 
+		If ($v.Minor -gt 0){ $Minor = $v.Minor }
+		If ($v.Build -gt 0){ $Build = $v.Build }
+		If ($v.Revision -gt 0){ $Revision = $v.Revision }
+		return [version]::new($Major,$Minor,$($Build+1),$Revision)
 	}
