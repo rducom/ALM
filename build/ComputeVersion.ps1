@@ -179,7 +179,7 @@
 	function IsGitTag(){
 		try{
 			$current = git rev-parse HEAD
-			$tagFound = git describe --tags --exact-match $current
+			($tagFound = git describe --tags --exact-match $current) 2> $null
 			if([string]::IsNullOrWhiteSpace($tagFound)){
 				Write-Host "No tag found on commit " $current
 			}else{
