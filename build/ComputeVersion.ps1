@@ -6,6 +6,17 @@
 
 	# 1.2.3-rc3  			-> build on master, with git Tag = "1.2.3-rc3"  [public]  [pre-release]
 	# 1.2.4  				-> build on master, with git Tag = "1.2.3" 		[public]  [release]
+
+	function NextVersion (
+		[Parameter(Mandatory=$true)][string]$csProjPath,
+		[Parameter(Mandatory=$false)][string]$counter,
+        [Parameter(Mandatory=$false)][string]$pullRequest
+	)
+	{
+		$isTag = IsGitTag ? "true" : "false"
+		return Compute $csProjPath $counter $isTag $pullRequest
+	}
+
 	function Compute (
 		[Parameter(Mandatory=$true)][string]$CsProjPath,
 		[Parameter(Mandatory=$false)][string]$Counter,
@@ -163,6 +174,22 @@
 			Write-Host "Git tag extraction error"
 		}
 		return $null
+	}
+
+	function IsGitTag(){
+		try{
+			$current = git rev-parse HEAD
+			$tagFound = git describe --tags --exact-match $current
+			if([string]::IsNullOrWhiteSpace($tagFound)){
+				Write-Host "No tag found on commit " $current
+			}else{
+				return $true
+			}
+		}
+		catch{ 
+			Write-Host "Git tag extraction error"
+		}
+		return $false
 	}
 
 	function ExtractNewCsProjVersion([string]$path){
