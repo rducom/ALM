@@ -109,7 +109,12 @@
 			}elseif(![string]::IsNullOrEmpty($PullRequest)){ 
 				$deploy_unstable = $true
 				Write-Host "Mode : pull-request (alpha)" 		# mode on PR => # 1.2.3-PR4824-X 
-				$VersionSuffix = "PR" + $PullRequest + "-" + $BuildNumber
+				if($PullRequest.StartsWith("PR"))
+				{ 
+					$VersionSuffix = $PullRequest + "-" + $BuildNumber
+				}else{
+					$VersionSuffix = "PR" + $PullRequest + "-" + $BuildNumber
+				}
 			}elseif (![string]::IsNullOrEmpty($RequiredSuffix)){
 				$deploy_unstable = $true
 				Write-Host "Mode : master beta pre-release" 				# mode build on master => 1.2.3-rc3-X
