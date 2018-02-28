@@ -13,7 +13,11 @@
         [Parameter(Mandatory=$false)][string]$pullRequest
 	)
 	{
-		$isTag = IsGitTag ? "true" : "false"
+		if(IsGitTag){
+			$isTag = "true"	
+		}else{
+			$isTag = "false"
+		}
 		return Compute $csProjPath $counter $isTag $pullRequest
 	}
 
@@ -189,7 +193,9 @@
 	function IsGitTag(){
 		try{
 			$current = git rev-parse HEAD
+			Write-Host "current commit = " $current
 			($tagFound = git describe --tags --exact-match $current) 2> $null
+			Write-Host "tag found = " $tagFound
 			if([string]::IsNullOrWhiteSpace($tagFound)){
 				Write-Host "No tag found on commit " $current
 			}else{
