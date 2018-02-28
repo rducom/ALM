@@ -29,6 +29,11 @@
 
 		# Try extract git tag
 		$tagfound = ExtractGitTag
+		if($tagfound = $PullRequest){
+			#Jenkins sends the git tag as PR string when building tag.
+			#We reset $PullRequest to empty, to fit the 'build master' case
+			$PullRequest = ""
+		}
 
 		if(![string]::IsNullOrWhiteSpace($tagfound)){
 			$pre = GetPrefix($tagfound.Trim())
