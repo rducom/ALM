@@ -32,8 +32,9 @@
 		[string]$RequiredSuffix
 
 		# Try extract git tag
-		$tagfound = ExtractGitTag
-		if($tagfound = $PullRequest){
+		$tagfound = ExtractGitTag 
+
+		if($tagfound -eq $PullRequest){
 			#Jenkins sends the git tag as PR string when building tag.
 			#We reset $PullRequest to empty, to fit the 'build master' case
 			$PullRequest = ""
@@ -176,11 +177,11 @@
 		try{
 			$revList = git.exe rev-list --tags --max-count=1
 			if([string]::IsNullOrWhiteSpace($revList)){
-				Write-Host "No git tag found"
+				Write-Host "ExtractGitTag : No git tag found"
 			}else{
-				$tagfound = git.exe describe --tags $revList
-				Write-Host "Git tag found : " $tagfound
-				return $tagfound
+				$extractetdTagfound = git.exe describe --tags $revList
+				Write-Host "ExtractGitTag : Git tag found : " $extractetdTagfound
+				return $extractetdTagfound
 				#if there's a git tag in the past, it overrides the csproj version
 			}
 		}
@@ -193,12 +194,13 @@
 	function IsGitTag(){
 		try{
 			$current = git rev-parse HEAD
-			Write-Host "current commit = " $current
+			Write-Host "IsGitTag : current commit = " $current
 			($tagFound = git describe --tags --exact-match $current) 2> $null
-			Write-Host "tag found = " $tagFound
+			
 			if([string]::IsNullOrWhiteSpace($tagFound)){
-				Write-Host "No tag found on commit " $current
+				Write-Host "IsGitTag : No tag found on commit " $current
 			}else{
+				Write-Host "IsGitTag : tag found = " $tagFound
 				return $true
 			}
 		}
