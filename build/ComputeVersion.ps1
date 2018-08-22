@@ -40,6 +40,12 @@
 			$PullRequest = ""
 		}
 
+		if (![string]::IsNullOrEmpty($PullRequest)){
+			#Clean branch/PR name to comply semver2 specs
+			$invalid = '[^0-9A-Za-z-]'
+			$PullRequest = $PullRequest -replace $invalid, ''
+		}
+
 		if(![string]::IsNullOrWhiteSpace($tagfound)){
 			$pre = GetPrefix($tagfound.Trim())
 			# Only a git tag can drive the version suffix
